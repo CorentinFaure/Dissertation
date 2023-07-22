@@ -1,0 +1,233 @@
+---
+title: "Dissertation quantitative analysis"
+author: "Corentin FAURE"
+date: "2023-05-26"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyr)
+library(readxl)
+library(readr)
+library(stringr)
+library(openxlsx)
+```
+
+# Data collection, cleaning and harmonisation
+
+Importing the two dataset in two languages and cleaning useless columns:
+
+```{r}
+data_EN<-read_csv("EN - Data-Driven Management.csv")
+data_EN<-data_EN[,!names(data_EN) %in% "Horodateur"]
+
+data_FR<-read_csv("FR - Data-Driven Management.csv")
+data_FR<-data_FR[,!names(data_FR) %in% "Horodateur"]
+```
+
+Traducing the French survey in English:
+
+```{r}
+#Columns names
+column_names_EN <- names(data_EN)
+names(data_FR) <- column_names_EN
+
+```
+
+
+```{r}
+# Traducting answers on personal informations
+data_FR$`Have you ever worked? (in any sector at any job)`<-gsub("Oui", "Yes",data_FR$`Have you ever worked? (in any sector at any job)`)
+data_FR$`Have you ever worked? (in any sector at any job)`<-gsub("Non", "No",data_FR$`Have you ever worked? (in any sector at any job)`)
+
+data_FR$`Do you think other sectors should get inspired by the uses of Data Analytics in the Army/Defense?`<-gsub("Oui", "Yes",data_FR$`Have you ever worked? (in any sector at any job)`)
+data_FR$`Do you think other sectors should get inspired by the uses of Data Analytics in the Army/Defense?`<-gsub("Non", "No",data_FR$`Have you ever worked? (in any sector at any job)`)
+data_FR$`Do you think other sectors should get inspired by the uses of Data Analytics in the Army/Defense?`<-gsub("Un peu", "A bit",data_FR$`Have you ever worked? (in any sector at any job)`)
+data_FR$`Do you think other sectors should get inspired by the uses of Data Analytics in the Army/Defense?`<-gsub("Je ne sais pas", "I don't know",data_FR$`Have you ever worked? (in any sector at any job)`)
+data_FR$`Do you think other sectors should get inspired by the uses of Data Analytics in the Army/Defense?`<-gsub("Pas vraiment", "Not really",data_FR$`Have you ever worked? (in any sector at any job)`)
+```
+
+
+```{r}
+#print(unique(data_FR[,2]))
+data_FR$`(optional) What is your job?`<-gsub("Etudiant","Student", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Alternant","Internship", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Étudiant en alternance","Internship", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Cadre","Executive", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Salarié","Employee", data_FR$`(optional) What is your job?`)
+```
+
+```{r}
+#print(unique(data_FR[,1]))
+#print(unique(data_EN[,1]))
+data_FR$`How old are you?`<-gsub("18 - 25 ans","18 - 25 years old", data_FR$`How old are you?`)
+data_FR$`How old are you?`<-gsub("26 - 35 ans","26 - 35 years old", data_FR$`How old are you?`)
+data_FR$`How old are you?`<-gsub("36 - 55 ans","36 - 55 years old", data_FR$`How old are you?`)
+data_FR$`How old are you?`<-gsub("> 55 ans","More than 50 years old", data_FR$`How old are you?`)
+```
+
+```{r}
+#print(unique(data_FR[,2]))
+data_FR$`(optional) What is your job?`<-gsub("Etudiant","Student", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Alternant","Internship", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Étudiant en alternance","Internship", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Cadre","Executive", data_FR$`(optional) What is your job?`)
+data_FR$`(optional) What is your job?`<-gsub("Salarié","Employee", data_FR$`(optional) What is your job?`)
+```
+
+```{r}
+#print(unique(data_FR[,10]))
+data_FR$`In your opinion, which sector needs to use more data Analytics?`<-gsub("Santé","Health Services", data_FR$`In your opinion, which sector needs to use more data Analytics?`)
+
+data_FR$`In your opinion, which sector needs to use more data Analytics?`<-gsub("Finance","Financial Services", data_FR$`In your opinion, which sector needs to use more data Analytics?`)
+
+data_FR$`In your opinion, which sector needs to use more data Analytics?`<-gsub("Armée et Défense","Army and Defense", data_FR$`In your opinion, which sector needs to use more data Analytics?`)
+
+data_FR$`In your opinion, which sector needs to use more data Analytics?`<-gsub("Production industrielle","Manufacturing", data_FR$`In your opinion, which sector needs to use more data Analytics?`)
+
+data_FR$`In your opinion, which sector needs to use more data Analytics?`<-gsub("Hôtellerie","Hospitality", data_FR$`In your opinion, which sector needs to use more data Analytics?`)
+
+data_FR$`In your opinion, which sector needs to use more data Analytics?`<-gsub("Industrie chimique","Chemical industries", data_FR$`In your opinion, which sector needs to use more data Analytics?`)
+
+## Agriculture and Education are already translated
+```
+
+```{r}
+#Généralisation au reste de la database
+data_FR[] <- lapply(data_FR, function(x) gsub("Industrie chimique", "Chemical industries", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Hôtellerie","Hospitality", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Production industrielle","Manufacturing", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Armée et Défense","Army and Defense", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Finance","Financial Services", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Santé","Health Services", x))
+```
+
+```{r}
+#Généralisation au reste de la database
+#print(unique(data_FR[,22]))
+data_FR[] <- lapply(data_FR, function(x) gsub("Un accès à un grand nombre de Data", "Access to more data", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Des ressources techniques plus importantes","More technical ressources", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Pas de limites légales","Not regulation-limited", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Des ressources financières plus importantes","More financial ressources", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Une meilleure qualité de la Data","Higher data quality", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("L'innovation historique","Historically innovative", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Pas de limites ethiques","No ethical limits", x))
+data_EN[] <- lapply(data_EN, function(x) gsub("No ethical limit","No ethical limits", x))
+```
+
+```{r}
+#Généralisation au reste de la database
+#print(unique(data_FR[,25]))
+#print(unique(data_EN[,25]))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Règlementations", "Regulations", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Préoccupations sur le respect des droits de l'Homme","Human rights concerns", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Impossible de comparer des ressources financières si disproportionnées","Impossible to compare financial ressources", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Préoccupations éthiques vis-à-vis de la récolte de données privées","Ethical concerns about the collection of private data", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Préoccupations éthiques vis-à-vis de l'utilisation de données privées","Ethical concern about the uses of private data", x))
+
+data_FR[] <- lapply(data_FR, function(x) gsub("Impossible de comparer des ressources techniques si disproportionnées","Impossible to compare technical ressources", x))
+
+data_EN[] <- lapply(data_EN, function(x) gsub("Préoccupations environnementales","Environmental concerns", x))
+```
+
+Now that the data_FR database is translated, we can create now creat a new database with all the responses. However, it is interesting to keep track of the respondent langage to understand if bias could be linked to the culture.
+
+
+```{r}
+concat <- rbind(data_FR, data_EN)
+```
+
+We may also get rid of uselesss column for our direct quantitative analysis. However, some verbatim might be interesting and would be kept in concat
+
+```{r}
+data_concat<-concat[,-c(6,9,15,26,27,28,29)]
+```
+
+```{r}
+class(data_concat$`Have you ever use Data at work?`)
+class(data_concat$`Do you think it was or could have been helpful?`)
+data_concat$`Have you ever use Data at work?` <- as.numeric(data_concat$`Have you ever use Data at work?`)
+data_concat$`Do you think it was or could have been helpful?` <- as.numeric(data_concat$`Do you think it was or could have been helpful?`)
+```
+
+```{r}
+correlation <- cor(data_concat$`Have you ever use Data at work?`, data_concat$`Do you think it was or could have been helpful?`,use = "complete.obs")
+print(correlation)
+```
+
+People already experiencing Data Analytics are strongly convinced it is or could be useful for companies (0.65). Opinion is validated the studies seen in the Dissertation proposal. We need to validate these information.
+
+
+
+```{r}
+entites_separees <- strsplit(data_concat$`In your opinion, which sector needs to use more data Analytics?`, ";")
+
+# Afficher les entités séparées pour chaque ligne du data frame
+for (i in 1:length(entites_separees)) {
+  print(entites_separees[[i]])
+}
+
+toutes_les_valeurs <- factor(unlist(entites_separees))
+
+# Utiliser la fonction table() pour compter les occurrences de chaque valeur, y compris les occurrences de zéro
+comptage_occurrences <- table(toutes_les_valeurs)
+comptage_occurrences <- sort(comptage_occurrences, decreasing = TRUE)
+print(comptage_occurrences)
+
+# Créer le diagramme en barres avec les noms de valeurs et les nombres d'occurrences
+barplot(comptage_occurrences, main = "Occurrences des valeurs", xlab = "Valeurs", ylab = "Fréquence", 
+        col = "skyblue")
+```
+
+We can see that all sectors might take advantage of Data Analytics. However, it seems that Data Analytics could be of great use in the conflict sector. 
+Moreover, it seems that any progress in the uses of Data Analytics could benefit to all sectors. Some sectors may be unequally interested in Data Analytics regarding its benefits.
+
+The next questions will try to determine if Army & Defense could be precursor in term of Data Analytics. Moreover, it will permit to determine what limits could be highlighted by respond in terms of the uses of Data by this Army and Defense sector.
+
+To keep illustrating the result, the new database will be analysed on Excel thanks to the following code
+
+```{r}
+entites_separees2 <- strsplit(data_concat$`In your opinion, why some companies are rejecting the influence of the uses of Data Analytics by the Army/Defense?`, ";")
+
+# Afficher les entités séparées pour chaque ligne du data frame
+for (i in 1:length(entites_separees2)) {
+  print(entites_separees2[[i]])
+}
+
+toutes_les_valeurs2 <- factor(unlist(entites_separees2))
+
+# Utiliser la fonction table() pour compter les occurrences de chaque valeur, y compris les occurrences de zéro
+comptage_occurrences2 <- table(toutes_les_valeurs2)
+comptage_occurrences2 <- sort(comptage_occurrences2, decreasing = TRUE)
+print(comptage_occurrences2)
+
+# Créer le diagramme en barres avec les noms de valeurs et les nombres d'occurrences
+barplot(comptage_occurrences, main = "Occurrences des valeurs", xlab = "Valeurs", ylab = "Fréquence", 
+        col = "skyblue")
+```
+
+```{r}
+write.xlsx(data_concat, file = "data_survey_concat.xlsx")
+```
+
+
+
